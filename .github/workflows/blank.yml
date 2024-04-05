@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: obsproject/obs-studio
-          fetch-depth: 1
+          fetch-depth: 0
       - name: Check Event Data ☑️
         id: setup
         env:
@@ -57,6 +57,7 @@ jobs:
         with:
           repository: obsproject/obs-studio
           submodules: recursive
+          fetch-depth: 0
 
       - name: Build OBS Studio 🧱
         uses: ./.github/actions/build-obs
