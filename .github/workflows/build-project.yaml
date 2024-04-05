@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-		  repository: obsproject/obs-studio
+          repository: obsproject/obs-studio
           fetch-depth: 1
       - name: Check Event Data ☑️
         id: setup
@@ -26,7 +26,7 @@ jobs:
         run: |
           : Check Event Data ☑️
           if [[ "${RUNNER_DEBUG}" ]]; then set -x; fi
-		  config_data=('codesign:false' 'notarize:false' 'package:true' 'config:Debug')
+          config_data=('codesign:false' 'notarize:false' 'package:true' 'config:Debug')
           for config in "${config_data[@]}"; do
             IFS=':' read -r key value <<< "${config}"
             echo "${key}=${value}" >> $GITHUB_OUTPUT
@@ -43,7 +43,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-		  repository: obsproject/obs-studio
+          repository: obsproject/obs-studio
           submodules: recursive
 
       - name: Build OBS Studio 🧱
