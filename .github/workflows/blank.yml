@@ -1,0 +1,78 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI Build Project
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "master" branch
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  check-event:
+    name: Event Data  🔎
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
+    outputs:
+      package: ${{ steps.setup.outputs.package }}
+      codesign: ${{ steps.setup.outputs.codesign }}
+      notarize: ${{ steps.setup.outputs.notarize }}
+      config: ${{ steps.setup.outputs.config }}
+      commitHash: ${{ steps.setup.outputs.commitHash }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: obsproject/obs-studio
+          fetch-depth: 1
+      - name: Check Event Data ☑️
+        id: setup
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          : Check Event Data ☑️
+          if [[ "${RUNNER_DEBUG}" ]]; then set -x; fi
+          config_data=('codesign:false' 'notarize:false' 'package:true' 'config:Debug')
+          for config in "${config_data[@]}"; do
+            IFS=':' read -r key value <<< "${config}"
+            echo "${key}=${value}" >> $GITHUB_OUTPUT
+          done
+          echo "commitHash=${GITHUB_SHA:0:9}" >> $GITHUB_OUTPUT
+
+  windows-build:
+    name: Windows 🪟
+    runs-on: windows-2022
+    needs: check-event
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: obsproject/obs-studio
+          submodules: recursive
+
+      - name: Build OBS Studio 🧱
+        uses: ./.github/actions/build-obs
+        with:
+          target: x64
+          config: ${{ needs.check-event.outputs.config }}
+
+      - name: Package OBS Studio 📀
+        uses: ./.github/actions/package-obs
+        with:
+          target: x64
+          config: ${{ needs.check-event.outputs.config }}
+          package: ${{ fromJSON(needs.check-event.outputs.package) }}
+
+      - name: Upload Artifacts 📡
+        uses: actions/upload-artifact@v4
+        with:
+          name: obs-studio-windows-x64-${{ needs.check-event.outputs.commitHash }}
+          path: ${{ github.workspace }}/build_x64/obs-studio-*-windows-x64.zip
